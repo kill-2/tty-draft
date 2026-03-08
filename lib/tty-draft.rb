@@ -76,6 +76,10 @@ module TTY
         if @work + 1 < @workspaces.size
           return load_history(@work += 1)
         end
+      when :home, :ctrl_a
+        @col = 0
+      when :end, :ctrl_e
+        @col = current_row.size
       when :return
         insert_row
       else
