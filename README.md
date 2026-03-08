@@ -19,14 +19,16 @@ gem install tty-draft
 ```ruby
 require 'tty-draft'
 
+draft = TTY::Draft.new
+
 loop do
-  puts TTY::Draft.gets
+  draft.gets
   puts "I see"
 end
 ```
 
 - `enter`: new line
-- arrow keys: move cursor around
+- arrow keys: move cursor around and retrieve history
 - `ctrl-d`/`ctrl-z`: submit
 
 ## License

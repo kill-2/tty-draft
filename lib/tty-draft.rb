@@ -3,41 +3,38 @@ require 'tty-live'
 
 module TTY
   class Draft
-    VERSION = '0.1.1'
-
-    class << self
-      def gets
-        draft = new
-        reader = Reader.new
-        reader.subscribe(draft)
-        live = Live.new
-
-        loop do
-          reader.read_char
-          if draft.done
-            live.update('')
-            reader.unsubscribe(draft)
-            print live.show
-            return draft.edited
-          end
-          live.update(draft.editing)
-          print live.hide
-        end
-      end
-    end
+    VERSION = '0.1.2'
 
     attr_reader :done
 
     def initialize
-      @chars = [[]]
-      @row = 0
-      @col = 0
+      new_draft
+    end
+
+    def gets
+      reader = Reader.new
+      reader.subscribe(self)
+      live = Live.new
+
+      loop do
+        reader.read_char
+        if done
+          puts
+          live.update('')
+          reader.unsubscribe(self)
+          print live.show
+          return edited.tap{new_draft}
+        end
+        live.update(editing)
+        print live.hide
+      end
     end
 
     def keypress(event)
       @done = false
       case event.key.name
       when :ctrl_d, :ctrl_z
+        history << @chars
         @done = true
       when :backspace
         if @col > 0
@@ -63,11 +60,21 @@ module TTY
         @row += 1
         @col = 0
       when :up
-        @row -= 1 if @row > 0
-        fix_col
+        if @row > 0
+          @row -= 1
+          return fix_col
+        end
+        if @work > 0
+          return load_history(@work -= 1)
+        end
       when :down
-        @row += 1 if (@row + 1) < @chars.size
-        fix_col
+        if (@row + 1) < @chars.size
+          @row += 1
+          return fix_col
+        end
+        if @work + 1 < @workspaces.size
+          return load_history(@work += 1)
+        end
       when :return
         insert_row
       else
@@ -107,6 +114,23 @@ module TTY
       @chars[@row] = current_row[0...@col]
       @row += 1
       @col = 0
+    end
+
+    def new_draft
+      @chars = [[]]
+      @row = 0
+      @col = 0
+      (@workspaces = [])[(@work = history.size)] = @chars
+    end
+
+    def history
+      @history ||= []
+    end
+
+    def load_history(i)
+      @chars = (@workspaces[i] ||= @history[i].map(&:dup))
+      @row = @chars.size - 1
+      @col = current_row.size
     end
 
     def fix_col
