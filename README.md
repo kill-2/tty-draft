@@ -25,9 +25,9 @@ loop do
 end
 ```
 
-- `enter`: submit
-- `shift+enter`: new line
+- `enter`: new line
 - arrow keys: move cursor around
+- `ctrl-d`/`ctrl-z`: submit
 
 ## License
 

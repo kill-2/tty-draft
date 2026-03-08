@@ -3,7 +3,7 @@ require 'tty-live'
 
 module TTY
   class Draft
-    VERSION = '0.1.0'
+    VERSION = '0.1.1'
 
     class << self
       def gets
@@ -37,6 +37,8 @@ module TTY
     def keypress(event)
       @done = false
       case event.key.name
+      when :ctrl_d, :ctrl_z
+        @done = true
       when :backspace
         if @col > 0
           @col -= 1
@@ -67,8 +69,7 @@ module TTY
         @row += 1 if (@row + 1) < @chars.size
         fix_col
       when :return
-        return insert_row if event.key.shift
-        @done = true
+        insert_row
       else
         return insert_row if event.value == "\n"
         current_row.insert(@col, event.value)
