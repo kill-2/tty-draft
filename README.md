@@ -19,7 +19,9 @@ gem install tty-draft
 ```ruby
 require 'tty-draft'
 
-draft = TTY::Draft.new
+draft = TTY::Draft.new(
+  prompt: ->(n){n==0 ? "\033[32m> \033[0m" : '  '}
+)
 
 loop do
   draft.gets

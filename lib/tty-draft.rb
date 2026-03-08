@@ -7,7 +7,8 @@ module TTY
 
     attr_reader :done
 
-    def initialize
+    def initialize(prompt: ->(n){''})
+      @prompt = prompt
       new_draft
     end
 
@@ -16,14 +17,14 @@ module TTY
       reader.subscribe(self)
       live = Live.new
 
+      live.update(edited)
       loop do
         reader.read_char
         if done
-          puts
-          live.update('')
+          live.update(edited)
           reader.unsubscribe(self)
-          print live.show
-          return edited.tap{new_draft}
+          puts live.show
+          return to_string(@chars).tap{new_draft}
         end
         live.update(editing)
         print live.hide
@@ -84,18 +85,18 @@ module TTY
       end
     end
 
+    private
+
     def edited
-      to_string(@chars)
+      render to_string(@chars)
     end
 
     def editing
       copy = @chars.dup
       copy[@row] = current_row.dup
       copy[@row][@col] = "\e[7m#{copy[@row][@col] || ' '}\e[27m"
-      to_string(copy)
+      render to_string(copy)
     end
-
-    private
 
     def delete_char
       current_row.delete_at(@col)
@@ -138,7 +139,14 @@ module TTY
     end
 
     def to_string(chars)
-      chars.map{|r| r.empty? ? ' ' : r.join }.join("\n")
+      chars.map(&:join).join("\n")
+    end
+
+    def render(str)
+      lines = str.empty? ? [''] : str.each_line
+      lines.each_with_index.map do |line, i|
+        @prompt[i] + line
+      end.join
     end
   end
 end
